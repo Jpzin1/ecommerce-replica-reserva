@@ -1,11 +1,14 @@
 from django.shortcuts import render
+from .models import *
 
 # Create your views here.
 def homepage(request):
     return render(request, 'homepage.html')
 
 def loja(request):
-    return render(request, 'loja.html')
+    produtos = Produto.objects.all() # Query para buscar todos os produtos
+    context = {"produtos": produtos} 
+    return render(request, 'loja.html', context)
 
 def carrinho(request):
     return render(request, 'carrinho.html')
