@@ -3,9 +3,13 @@
 
 {% block body %}
 
+<h3>Homepage</h3>
+
 {% for banner in banners %}
 
-{{ banner }}
+<a href="{{ banner.link_destino}}">
+    <img src="{{ banner.imagem.url }}">
+</a>
 
 {% endfor %}
 
