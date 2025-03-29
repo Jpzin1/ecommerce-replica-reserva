@@ -48,7 +48,12 @@ def adicionar_carrinho(request, id_produto):
 
 
 def carrinho(request):
-    return render(request, 'carrinho.html')
+    if request.user.is_authenticated:
+        cliente = request.user.cliente
+    pedido, criado = Pedido.objects.get_or_create(cliente=cliente, finalizado=False)
+    itens_pedido = ItensPedido.objects.filter(pedido=pedido)
+    context = {"itens_pedido": itens_pedido, "pedido": pedido}
+    return render(request, 'carrinho.html', context)
 
 def checkout(request):
     return render(request, 'checkout.html')
@@ -58,4 +63,7 @@ def minha_conta(request):
 
 def login(request):
     return render(request, 'usuario/login.html')
+
+# TODO Sempre que o usuario criar uma conta no nosso site a gente vai criar um cliente para ele
+
 
