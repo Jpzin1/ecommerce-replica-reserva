@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import *
 import uuid
+from .utils import filtrar_produtos
 
 # Create your views here.
 def homepage(request):
@@ -10,8 +11,7 @@ def homepage(request):
 
 def loja(request, filtro=None):
     produtos = Produto.objects.filter(ativo=True)
-    if filtro:
-        produtos = produtos.filter(categoria__slug=filtro)
+    produtos = filtrar_produtos(produtos, filtro)
     context = {"produtos": produtos}
     return render(request, 'loja.html', context)
 
