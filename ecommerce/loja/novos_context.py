@@ -1,4 +1,4 @@
-from .models import Pedido, ItensPedido, Cliente
+from .models import Pedido, ItensPedido, Cliente, Categoria, Tipo
 
 # Sempre que o usuario criar uma conta no nosso site a gente vai criar um cliente para ele
 def carrinho(request):
@@ -19,6 +19,6 @@ def carrinho(request):
 
 
 def categorias_tipos(request):
-    categorias =
-    tipos =
-    return
+    categorias = Categoria.objects.all()
+    tipos = Tipo.objects.all()
+    return {"categorias": categorias, "tipos": tipos}

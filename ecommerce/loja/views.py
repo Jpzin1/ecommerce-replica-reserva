@@ -8,10 +8,10 @@ def homepage(request):
     context = {"banners": banners}
     return render(request, 'homepage.html', context)
 
-def loja(request, nome_categoria=None):
+def loja(request, filtro=None):
     produtos = Produto.objects.filter(ativo=True)
-    if nome_categoria:
-        produtos = produtos.filter(categoria__nome=nome_categoria)
+    if filtro:
+        produtos = produtos.filter(categoria__slug=filtro)
     context = {"produtos": produtos}
     return render(request, 'loja.html', context)
 
