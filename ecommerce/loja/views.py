@@ -6,6 +6,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from datetime import datetime
 
 
 # Create your views here.
@@ -139,8 +140,53 @@ def checkout(request):
             return redirect('loja')
     pedido, criado = Pedido.objects.get_or_create(cliente=cliente, finalizado=False)
     enderecos = Endereco.objects.filter(cliente=cliente)
-    context = {"pedido": pedido, "enderecos": enderecos}
+    context = {"pedido": pedido, "enderecos": enderecos, "erro": None}
     return render(request, 'checkout.html', context)
+
+def finalizar_pedido(request, id_pedido):
+    if request.method == "POST":
+        erro = None
+        dados = request.POST.dict()
+        print(dados)
+        total = dados.get("total")
+        pedido = Pedido.objects.get(id=id_pedido)
+
+        if total != pedido.preco_total:
+            erro = "preco"
+
+        if not "endereco" in dados:
+            erro = "endereco"
+        else:
+            endereco = dados.get("endereco")
+            pedido.endereco = endereco
+
+        if not request.user.is_authenticated:
+            email = dados.get("email")
+            try:
+                validate_email(email)
+            except ValidationError:
+                erro = "email"
+            if not erro:
+                clientes = Cliente.objects.filter(email=email)
+                if clientes:
+                    pedido.cliente = clientes[0]
+                else:
+                    pedido.cliente.email = email
+                    pedido.cliente.save()
+
+        codigo_transacao = f"{pedido.id}-{datetime.now().timestamp()}"
+        pedido.codigo_transacao = codigo_transacao
+        pedido.save()  
+        if erro:
+            enderecos = Endereco.objects.filter(cliente=pedido.cliente)
+            context = {"erro": erro, "pedido": pedido, "enderecos": enderecos}
+            return render(request, "checkout.html", context)
+        else:
+            # TODO pagamento do usuario
+            return redirect('checkout')
+    else:
+        return redirect('loja')
+    
 
 def adicionar_endereco(request):
     if request.method == "POST":
@@ -165,7 +211,48 @@ def adicionar_endereco(request):
 
 @login_required
 def minha_conta(request):
-    return render(request, 'usuario/minha_conta.html')
+    alterado = False
+    erro = None
+    if request.method == "POST":
+        dados = request.POST.dict()
+        if "senha_atual" in dados:
+            # usuario modificando a senha
+            senha_atual = dados.get("senha_atual")
+            nova_senha = dados.get("nova_senha")
+            nova_senha_confirmacao = dados.get("nova_senha_confirmacao")
+            if nova_senha == nova_senha_confirmacao:
+                # verificar se a senha atual esta correta
+                usuario = authenticate(request, username=request.user.email, password=senha_atual)
+                if usuario:
+                    usuario.set_password(nova_senha)
+                    usuario.save()
+                    alterado = True
+                else:
+                    erro = "senha_incorreta"
+            else:
+                erro = "senhas_diferentes"
+        elif "email" in dados:
+            email = dados.get("email")
+            telfone = dados.get("telefone")
+            nome = dados.get("nome")
+            if email != request.user.email:
+                usuarios = User.objects.filter(email=email)
+                if len(usuarios) > 0:
+                    erro = "email_existente"
+            if not erro:
+                cliente = request.user.cliente
+                cliente.email = email
+                request.user.email = email
+                request.user.username = email
+                cliente.nome = nome
+                cliente.telefone = telfone
+                cliente.save()
+                request.user.save() 
+                alterado = True
+        else:
+            erro = "formulario_invalido"
+    context = {"erro": erro, "alterado": alterado}
+    return render(request, 'usuario/minha_conta.html', context)
 
 @login_required
 def meus_pedidos(request):
