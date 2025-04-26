@@ -31,6 +31,6 @@ def criar_pagamento(itens_pedido, link):
     }
     # Crie a preferência de pagamento
     resposta = sdk.preference().create(preference_data)
-    link = resposta["response"]["init_point"]
+    link_pagamento= resposta["response"]["init_point"]
     id_pagamento = resposta["response"]["id"]
-    print(link, id_pagamento)
+    return link_pagamento, id_pagamento
