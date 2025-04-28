@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from .models import *
 import uuid
 from .utils import filtrar_produtos, preco_minimo_maximo, ordenar_produtos
@@ -184,13 +185,17 @@ def finalizar_pedido(request, id_pedido):
             return render(request, "checkout.html", context)
         else:
             itens_pedido = ItensPedido.objects.filter(pedido=pedido)
-            link = "https://webhook.site/5764eca8-053a-498b-8d5e-3fbdef544e0f"
+            link = request.build_absolute_uri(reverse('finalizar_pagamento'))
             link_pagamento, id_pagamento = criar_pagamento(itens_pedido, link)
             pagamento = Pagamento.objects.create(id_pagamento=id_pagamento, pedido=pedido)
             pagamento.save()
             return redirect(link_pagamento)
     else:
         return redirect('loja')
+    
+def finalizar_pagamento(request):
+    print(request.GET.dict())
+    return redirect('loja')
     
 
 def adicionar_endereco(request):
